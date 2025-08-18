@@ -3,9 +3,9 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
-app.use(express.static("public")); // serve frontend files
+app.use(express.static("public")); 
 
-let todos = []; // our in-memory storage
+let todos = []; 
 
 // Get all todos
 app.get("/api/todos", (req, res) => {
@@ -44,4 +44,4 @@ app.delete("/api/todos/:id", (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+module.exports = app;
