@@ -2,12 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// This line is crucial for Vercel and local environment variables
 require('dotenv').config();
 
 app.use(express.json());
 app.use(express.static("public"));
-
-
 
 const mongoURI = process.env.MONGO_URI; 
 
@@ -75,5 +75,5 @@ app.delete("/api/todos/:id", async (req, res) => {
   }
 });
 
-// Start the server
+// Start the server for local testing
 app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));

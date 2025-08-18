@@ -5,8 +5,16 @@ const addBtn = document.getElementById("addBtn");
 const todoList = document.getElementById("todoList");
 const emptyState = document.getElementById("emptyState");
 
+// Debug function to log errors
+function debugLog(message, error = null) {
+  console.log('🔍 DEBUG:', message);
+  if (error) console.error('❌ ERROR:', error);
+}
+
 // Custom alert function
 function showCustomAlert(title, message) {
+  debugLog(`Showing alert: ${title} - ${message}`);
+  
   // Remove existing alert if any
   const existingAlert = document.querySelector('.alert-overlay');
   if (existingAlert) {
@@ -49,9 +57,18 @@ function showCustomAlert(title, message) {
 
 // Fetch and display todos
 async function loadTodos() {
+  debugLog('Loading todos...');
   try {
     const res = await fetch("/api/todos");
+    debugLog(`API response status: ${res.status}`);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const todos = await res.json();
+    debugLog(`Loaded ${todos.length} todos`);
+    
     todoList.innerHTML = "";
     
     if (todos.length === 0) {
@@ -63,7 +80,8 @@ async function loadTodos() {
       todos.forEach(todo => renderTodo(todo));
     }
   } catch (error) {
-    console.error('Failed to load todos:', error);
+    debugLog('Failed to load todos', error);
+    showCustomAlert('⚠️ Connection Error', 'Failed to load tasks. Please check your internet connection.');
   }
 }
 
@@ -71,8 +89,9 @@ async function loadTodos() {
 setInterval(async () => {
   try {
     const res = await fetch("/api/todos");
+    if (!res.ok) return; // Skip if API is down
+    
     const todos = await res.json();
-
     const now = new Date();
     const currentDate = now.toISOString().split("T")[0]; 
     const currentTime = now.toTimeString().slice(0, 5); 
@@ -95,11 +114,13 @@ setInterval(async () => {
       }
     });
   } catch (error) {
-    console.error('Failed to check reminders:', error);
+    debugLog('Failed to check reminders', error);
   }
 }, 60000);
 
 function renderTodo(todo) {
+  debugLog(`Rendering todo: ${todo.text} (ID: ${todo._id})`);
+  
   const li = document.createElement("li");
   
   const span = document.createElement("span");
@@ -111,27 +132,67 @@ function renderTodo(todo) {
   
   span.textContent = todoText;
 
-  // Toggle button
+  // Toggle button with better error handling
   const toggleBtn = document.createElement("button");
   toggleBtn.textContent = todo.completed ? "Undo" : "Done";
-  toggleBtn.onclick = async () => {
+  toggleBtn.onclick = async (e) => {
+    debugLog(`Toggle button clicked for todo: ${todo._id}`);
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      await fetch(`/api/todos/${todo.id}`, { method: "PUT" });
-      loadTodos();
+      const response = await fetch(`/api/todos/${todo._id}`, { 
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      debugLog(`Toggle response status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      debugLog('Toggle successful', result);
+      
+      await loadTodos();
     } catch (error) {
-      console.error('Failed to toggle todo:', error);
+      debugLog('Failed to toggle todo', error);
+      showCustomAlert('⚠️ Error', 'Failed to update task. Please try again.');
     }
   };
 
-  // Delete button
+  // Delete button with better error handling
   const delBtn = document.createElement("button");
   delBtn.textContent = "✖";
-  delBtn.onclick = async () => {
+  delBtn.onclick = async (e) => {
+    debugLog(`Delete button clicked for todo: ${todo._id}`);
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      await fetch(`/api/todos/${todo.id}`, { method: "DELETE" });
-      loadTodos();
+      const response = await fetch(`/api/todos/${todo._id}`, { 
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      debugLog(`Delete response status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      debugLog('Delete successful', result);
+      
+      await loadTodos();
     } catch (error) {
-      console.error('Failed to delete todo:', error);
+      debugLog('Failed to delete todo', error);
+      showCustomAlert('⚠️ Error', 'Failed to delete task. Please try again.');
     }
   };
 
@@ -141,43 +202,79 @@ function renderTodo(todo) {
   todoList.appendChild(li);
 }
 
-addBtn.onclick = async () => {
+addBtn.onclick = async (e) => {
+  debugLog('Add button clicked');
+  e.preventDefault();
+  
   const text = todoInput.value.trim();
   const date = todoDate.value;
   const time = todoTime.value;
 
   if (!text) {
-    showCustomAlert('❌ Error', 'Please enter a task description.');
+    showCustomAlert('⚠️ Error', 'Please enter a task description.');
     todoInput.focus();
     return;
   }
 
   try {
-    await fetch("/api/todos", {
+    const response = await fetch("/api/todos", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ text, date, time })
     });
+
+    debugLog(`Add response status: ${response.status}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    debugLog('Add successful', result);
 
     // Clear inputs
     todoInput.value = "";
     todoDate.value = "";
     todoTime.value = "";
 
-    loadTodos();
+    await loadTodos();
     todoInput.focus();
   } catch (error) {
-    console.error('Failed to add todo:', error);
-    showCustomAlert('❌ Error', 'Failed to add task. Please try again.');
+    debugLog('Failed to add todo', error);
+    showCustomAlert('⚠️ Error', 'Failed to add task. Please try again.');
   }
 };
 
 // Allow Enter key to add todo
 todoInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
+    debugLog('Enter key pressed');
     addBtn.click();
   }
 });
 
+// Test API connection on load
+async function testConnection() {
+  debugLog('Testing API connection...');
+  try {
+    const response = await fetch('/api/todos');
+    if (response.ok) {
+      debugLog('✅ API connection successful');
+    } else {
+      debugLog(`❌ API connection failed: ${response.status}`);
+      showCustomAlert('⚠️ Connection Issue', 'Cannot connect to the server. Please refresh the page.');
+    }
+  } catch (error) {
+    debugLog('❌ API connection error', error);
+    showCustomAlert('⚠️ Connection Issue', 'Cannot connect to the server. Please check your internet connection.');
+  }
+}
+
 // Initialize
-loadTodos();
+document.addEventListener('DOMContentLoaded', () => {
+  debugLog('DOM loaded, initializing app...');
+  testConnection();
+  loadTodos();
+});

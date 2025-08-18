@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>To-Do App</title>
+  <title>Todo App</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
-    <h1><img src="images/todo2.gif"/> To-Do List</h1>
+    <h1>
+      <img src="images/todo1.jpeg" alt="Todo Icon">
+      My Todo List
+    </h1>
     
     <div class="input-section">
-      <input id="todoInput" type="text" placeholder="Enter a task" maxlength="100">
-      <input id="todoDate" type="date">
-      <input id="todoTime" type="time">
+      <input type="text" id="todoInput" placeholder="Enter a task..." />
+      <input type="date" id="todoDate" />
+      <input type="time" id="todoTime" />
       <button id="addBtn">Add Task</button>
     </div>
     
-    <ul id="todoList"></ul>
-    
     <div id="emptyState" class="empty-state" style="display: none;">
-      No tasks yet. Add one above!
+      No tasks yet! Add one above to get started.
     </div>
+    
+    <ul id="todoList"></ul>
   </div>
-
+  
   <script src="app.js"></script>
 </body>
 </html>
