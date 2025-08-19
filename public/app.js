@@ -5,6 +5,11 @@ const addBtn = document.getElementById("addBtn");
 const todoList = document.getElementById("todoList");
 const emptyState = document.getElementById("emptyState");
 
+// ✅ Detect environment and set API base
+const API_BASE = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000"   // Local dev
+  : "https://to-do-app-production.up.railway.app"; // Railway URL
+
 // Debug function to log errors
 function debugLog(message, error = null) {
   console.log('🔍 DEBUG:', message);
@@ -15,17 +20,12 @@ function debugLog(message, error = null) {
 function showCustomAlert(title, message) {
   debugLog(`Showing alert: ${title} - ${message}`);
   
-  // Remove existing alert if any
   const existingAlert = document.querySelector('.alert-overlay');
-  if (existingAlert) {
-    existingAlert.remove();
-  }
+  if (existingAlert) existingAlert.remove();
 
-  // Create alert overlay
   const overlay = document.createElement('div');
   overlay.className = 'alert-overlay';
   
-  // Create alert dialog
   const dialog = document.createElement('div');
   dialog.className = 'alert-dialog';
   
@@ -37,15 +37,11 @@ function showCustomAlert(title, message) {
   
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
-  
-  // Close on overlay click
+
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.remove();
-    }
+    if (e.target === overlay) overlay.remove();
   });
-  
-  // Close on Escape key
+
   const escapeHandler = (e) => {
     if (e.key === 'Escape') {
       overlay.remove();
@@ -59,12 +55,10 @@ function showCustomAlert(title, message) {
 async function loadTodos() {
   debugLog('Loading todos...');
   try {
-    const res = await fetch("/api/todos");
+    const res = await fetch(`${API_BASE}/api/todos`);
     debugLog(`API response status: ${res.status}`);
     
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     
     const todos = await res.json();
     debugLog(`Loaded ${todos.length} todos`);
@@ -88,8 +82,8 @@ async function loadTodos() {
 // Reminder checker (every 1 min)
 setInterval(async () => {
   try {
-    const res = await fetch("/api/todos");
-    if (!res.ok) return; // Skip if API is down
+    const res = await fetch(`${API_BASE}/api/todos`);
+    if (!res.ok) return;
     
     const todos = await res.json();
     const now = new Date();
@@ -97,11 +91,10 @@ setInterval(async () => {
     const currentTime = now.toTimeString().slice(0, 5); 
 
     todos.forEach(todo => {
-      if (todo.completed) return; // Don't remind for completed tasks
+      if (todo.completed) return;
       
       const todoDate = new Date(`${todo.date}T${todo.time}`);
       
-      // Format nicely for alert
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
       const formattedDate = todoDate.toLocaleDateString(undefined, options);
       const formattedTime = todoDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -132,7 +125,6 @@ function renderTodo(todo) {
   
   span.textContent = todoText;
 
-  // Toggle button with better error handling
   const toggleBtn = document.createElement("button");
   toggleBtn.textContent = todo.completed ? "Undo" : "Done";
   toggleBtn.onclick = async (e) => {
@@ -141,18 +133,13 @@ function renderTodo(todo) {
     e.stopPropagation();
     
     try {
-      const response = await fetch(`/api/todos/${todo._id}`, { 
+      const response = await fetch(`${API_BASE}/api/todos/${todo._id}`, { 
         method: "PUT",
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
       
       debugLog(`Toggle response status: ${response.status}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const result = await response.json();
       debugLog('Toggle successful', result);
@@ -164,7 +151,6 @@ function renderTodo(todo) {
     }
   };
 
-  // Delete button with better error handling
   const delBtn = document.createElement("button");
   delBtn.textContent = "✖";
   delBtn.onclick = async (e) => {
@@ -173,18 +159,13 @@ function renderTodo(todo) {
     e.stopPropagation();
     
     try {
-      const response = await fetch(`/api/todos/${todo._id}`, { 
+      const response = await fetch(`${API_BASE}/api/todos/${todo._id}`, { 
         method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
       
       debugLog(`Delete response status: ${response.status}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const result = await response.json();
       debugLog('Delete successful', result);
@@ -217,24 +198,18 @@ addBtn.onclick = async (e) => {
   }
 
   try {
-    const response = await fetch("/api/todos", {
+    const response = await fetch(`${API_BASE}/api/todos`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, date, time })
     });
 
     debugLog(`Add response status: ${response.status}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
     const result = await response.json();
     debugLog('Add successful', result);
 
-    // Clear inputs
     todoInput.value = "";
     todoDate.value = "";
     todoTime.value = "";
@@ -247,7 +222,6 @@ addBtn.onclick = async (e) => {
   }
 };
 
-// Allow Enter key to add todo
 todoInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     debugLog('Enter key pressed');
@@ -255,11 +229,10 @@ todoInput.addEventListener('keypress', (e) => {
   }
 });
 
-// Test API connection on load
 async function testConnection() {
   debugLog('Testing API connection...');
   try {
-    const response = await fetch('/api/todos');
+    const response = await fetch(`${API_BASE}/api/todos`);
     if (response.ok) {
       debugLog('✅ API connection successful');
     } else {
@@ -272,7 +245,6 @@ async function testConnection() {
   }
 }
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   debugLog('DOM loaded, initializing app...');
   testConnection();
