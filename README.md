@@ -1,7 +1,7 @@
 📝 Cute To-Do List App
 A beautiful, modern to-do list application with reminder notifications and adorable styling. Built with vanilla JavaScript, Express.js, and featuring a glassmorphism UI design with cute animations.
 
-Play With it Here: https://to-do-app-rho-henna.vercel.app/
+Demo Video: https://youtu.be/fc9rnAc8GGE
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/fc22b801-ee76-409f-974e-896a8267588f" />
 
